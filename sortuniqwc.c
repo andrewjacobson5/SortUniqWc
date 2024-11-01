@@ -1,5 +1,4 @@
 // Andrew Jacobson 10/29/24
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -27,14 +26,14 @@ int main(int argc, char *argv[]) {
 
         // tie write end of pipe fd1 to standard output (file descriptor 1)
         dup2(fd1[1], STDOUT_FILENO);
-        // close unnecessary pipe ends
+        // close read end of pipe fd1
         close(fd1[0]);
         close(fd1[1]);
         
-        // execute 'sort'
+        // start the sort command using execlp
         execlp("sort", "sort", NULL);
 
-        // if execlp fails
+        // should not get here
         printf("Should not be here after execlp to sort\n");
         perror("execlp sort");
         exit(EXIT_FAILURE);
@@ -52,7 +51,7 @@ int main(int argc, char *argv[]) {
         perror("fork");
         exit(EXIT_FAILURE);
     }
-    if (pid == 0) { // second child process to run 'uniq'
+    if (pid == 0) { // second child process, run uniq
         printf("The child process running uniq is %d\n", getpid());
 
         // tie read end of fd1 to standard input (file descriptor 0)
@@ -60,16 +59,17 @@ int main(int argc, char *argv[]) {
         // tie write end of fd2 to standard output (file descriptor 1)
         dup2(fd2[1], STDOUT_FILENO);
         
-        // close unnecessary pipe ends
+        // close write end of pipe fd1
+        // close read end of pipe fd2
         close(fd1[0]);
         close(fd1[1]);
         close(fd2[0]);
         close(fd2[1]);
 
-        // execute 'uniq'
+        // start the uniq command using execlp
         execlp("uniq", "uniq", NULL);
 
-        // if execlp fails
+        // should not get here
         printf("Should not be here after execlp to uniq\n");
         perror("execlp uniq");
         exit(EXIT_FAILURE);
@@ -81,22 +81,24 @@ int main(int argc, char *argv[]) {
         perror("fork");
         exit(EXIT_FAILURE);
     }
-    if (pid == 0) { // third child process to run 'wc -l'
+    if (pid == 0) { // third child for wc -l
         printf("The child process running wc -l is %d\n", getpid());
 
         // tie read end of fd2 to standard input (file descriptor 0)
         dup2(fd2[0], STDIN_FILENO);
 
-        // close all unnecessary pipe ends
+        // close write end of pipe fd2
+        // close read end of pipe fd1
+        // close write end of pipe fd1
         close(fd1[0]);
         close(fd1[1]);
         close(fd2[0]);
         close(fd2[1]);
 
-        // execute 'wc -l'
+        // start the wc -l command using execlp
         execlp("wc", "wc", "-l", NULL);
 
-        // if execlp fails
+        // should not get here
         printf("Should not be here after execlp to wc -l\n");
         perror("execlp wc -l");
         exit(EXIT_FAILURE);
@@ -109,9 +111,7 @@ int main(int argc, char *argv[]) {
     close(fd2[0]);
     close(fd2[1]);
 
-    // wait for all child processes to finish
-    wait(NULL);
-    wait(NULL);
+    // wait for third process to end
     wait(NULL);
 
     printf("All child processes have finished.\n");
