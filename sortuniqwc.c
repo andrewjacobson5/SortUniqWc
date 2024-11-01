@@ -6,7 +6,7 @@
 #include <sys/types.h>
 
 int main(int argc, char *argv[]) {
-    int fd1[2], fd2[2]; // file descriptors for the two pipes
+    int fd1[2], fd2[2];
     pid_t pid;
 
     // create first pipe fd1
@@ -28,7 +28,6 @@ int main(int argc, char *argv[]) {
         dup2(fd1[1], STDOUT_FILENO);
         // close read end of pipe fd1
         close(fd1[0]);
-        close(fd1[1]);
         
         // start the sort command using execlp
         execlp("sort", "sort", NULL);
@@ -61,10 +60,8 @@ int main(int argc, char *argv[]) {
         
         // close write end of pipe fd1
         // close read end of pipe fd2
-        close(fd1[0]);
         close(fd1[1]);
         close(fd2[0]);
-        close(fd2[1]);
 
         // start the uniq command using execlp
         execlp("uniq", "uniq", NULL);
@@ -92,7 +89,6 @@ int main(int argc, char *argv[]) {
         // close write end of pipe fd1
         close(fd1[0]);
         close(fd1[1]);
-        close(fd2[0]);
         close(fd2[1]);
 
         // start the wc -l command using execlp
